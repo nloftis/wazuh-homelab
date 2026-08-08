@@ -1,0 +1,19 @@
+# Generated certificates and private keys — regenerate via
+# `docker compose -f generate-indexer-certs.yml run --rm generator`.
+# Never commit private keys.
+config/wazuh_indexer_ssl_certs/*
+!config/wazuh_indexer_ssl_certs/.gitkeep
+
+# Runtime logs — NAS-only, not deployment config, may contain environment specifics
+wazuh-manager/
+
+# Local secrets — real values live only on the NAS and in 1Password
+.env
+docker-compose.override.yml
+
+# Real wazuh-wui API password — config/wazuh_dashboard/wazuh.yml.example
+# is committed instead, with the password field placeholder'd out
+config/wazuh_dashboard/wazuh.yml
+
+#Exclude backup files
+*.bak

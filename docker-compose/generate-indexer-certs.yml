@@ -1,0 +1,13 @@
+# One-time cert generation — run before first `docker compose up`:
+#   sudo docker compose -f generate-indexer-certs.yml run --rm generator
+# Output lands in ./config/wazuh_indexer_ssl_certs/ (referenced by docker-compose.yml)
+services:
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.4
+    pull_policy: never
+    hostname: wazuh-certs-generator
+    environment:
+      - CERT_TOOL_VERSION=4.14
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/:/certificates/
+      - ./config/certs.yml:/config/certs.yml

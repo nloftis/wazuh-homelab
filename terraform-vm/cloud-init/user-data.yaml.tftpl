@@ -1,0 +1,29 @@
+#cloud-config
+hostname: ${hostname}
+timezone: ${timezone}
+fqdn: ${hostname}.home.arpa
+
+users:
+  - name: ${admin_username}
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+# Password auth disabled — SSH key is the only way in
+ssh_pwauth: false
+disable_root: true
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - qemu-guest-agent
+  - curl
+  - gnupg
+  - apt-transport-https
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent

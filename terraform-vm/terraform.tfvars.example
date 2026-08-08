@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — it will not be committed.
+
+ssh_public_key = "ssh-ed25519 AAAA... your-key-here"
+
+# Optional overrides (defaults shown in variables.tf):
+# vm_name           = "wazuh-manager"
+# vcpu              = 4
+# memory_mb         = 8192
+# network_interface = "enp4s0"
