@@ -1,12 +1,23 @@
 # terraform-vm — Wazuh via Terraform + libvirt
 
+**Status: proven, reproducible on demand — currently torn down.** This
+path was deliberately destroyed (`terraform destroy`) once
+`docker-compose/` proved out as the always-on path — running two live
+managers doing the same job made no operational sense, and this VM only
+ever ran when its hypervisor host was powered on anyway. Nothing below
+was lost by destroying it: every `.tf` file, the version-pinned provider
+config, and the full troubleshooting history are still git-tracked and
+reproducible on demand (`terraform apply`) — this documents the real
+deployment that happened, not a live one you'd currently reach at the
+IPs referenced below.
+
 One of two deployment paths in this repo — see the [top-level
 README](../README.md) for how this relates to the `docker-compose/`
 path and what comes after either one. This document covers the
 Terraform/libvirt VM path specifically: full architecture, every real
 problem hit during deployment, and how each was resolved.
 
-Terraform-provisioned Wazuh SIEM/XDR deployment, running as a
+Terraform-provisioned Wazuh SIEM/XDR deployment, deployed as a
 KVM/libvirt VM on a Pop!_OS host — same macvtap-bridged VM pattern used
 elsewhere in this homelab. Parallel to, not merged with, the existing
 Grafana/Loki/Alloy observability stack on the Synology NAS.
@@ -68,6 +79,11 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+Running this now would create a fresh VM — there's currently nothing
+live to connect to until `apply` completes. Expect a new IP on the PC
+segment (not necessarily matching any IP referenced below, which
+reflects the last real deployment, not a guaranteed-stable address).
 
 ## After apply — manual steps (not managed by Terraform)
 
