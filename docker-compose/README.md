@@ -255,23 +255,11 @@ a simple env-var change at all) next time this needs to happen again.
 There are three different credential storage mechanisms in this stack,
 not one --- conflating them is the easiest way to get this wrong:
 
-  -------------------------------------------------------------------------------------------
-  Credential              Storage mechanism                           Rotation method
-  ----------------------- ------------------------------------------- -----------------------
-  Indexer `admin`         bcrypt **hash** in                          `hash.sh` → edit
-                          `config/wazuh_indexer/internal_users.yml`   `internal_users.yml` →
-                                                                      `securityadmin.sh`
-                                                                      (required --- no
-                                                                      shortcut)
-
-  Dashboard's internal    bcrypt **hash** in                          Same as above,
-  `kibanaserver`          `config/wazuh_indexer/internal_users.yml`   different block
-
-  Wazuh API `wazuh-wui`   **plaintext**, in `docker-compose.yml` env  Just change the value
-                          vars *and*                                  in both places --- no
-                          `config/wazuh_dashboard/wazuh.yml`'s        hashing involved
-                          `password:` field
-  -------------------------------------------------------------------------------------------
+| Credential | Storage mechanism | Rotation method |
+| --- | --- | --- |
+| Indexer `admin` | bcrypt **hash** in `config/wazuh_indexer/internal_users.yml` | `hash.sh` → edit `internal_users.yml` → `securityadmin.sh` (required — no shortcut) |
+| Dashboard's internal `kibanaserver` | bcrypt **hash** in `config/wazuh_indexer/internal_users.yml` | Same as above, different block |
+| Wazuh API `wazuh-wui` | **plaintext**, in `docker-compose.yml` env vars *and* `config/wazuh_dashboard/wazuh.yml`'s `password:` field | Just change the value in both places — no hashing involved |
 
 Setting a new value in `docker-compose.yml`/`.env` alone does **not**
 rotate `admin` or `kibanaserver` --- it just gives the manager/dashboard
