@@ -4,9 +4,6 @@
 config/wazuh_indexer_ssl_certs/*
 !config/wazuh_indexer_ssl_certs/.gitkeep
 
-# Runtime logs — NAS-only, not deployment config, may contain environment specifics
-wazuh-manager/
-
 # Local secrets — real values live only on the NAS and in 1Password
 .env
 docker-compose.override.yml
@@ -15,5 +12,5 @@ docker-compose.override.yml
 # is committed instead, with the password field placeholder'd out
 config/wazuh_dashboard/wazuh.yml
 
-#Exclude backup files
+# Backup files
 *.bak

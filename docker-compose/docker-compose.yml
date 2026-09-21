@@ -9,13 +9,9 @@
 #       cd /volume1/docker/wazuh && sudo docker compose up -d
 #   - mem_limit set explicitly on each service — shared 6GB-hard-ceiling NAS,
 #     Plex and telemetry take priority. TIGHT budget, see note below.
-#   - wazuh_logs bind-mounted to host (./wazuh-manager/logs) so plain-text logs
-#     (ossec.log, alerts.log) are readable without `docker exec`. Every other
-#     persistent volume (indexer segment data, manager etc/queue/config, filebeat
-#     state) stays a NAMED volume — Lucene/internal-format data, not human-readable,
-#     and permission-sensitive in the same way Loki's uid=10001 requirement was.
-#     Docker manages ownership internally for named volumes; no chown/chmod dance.
-#
+#   - /var/ossec/logs uses the wazuh_logs named volume rather than a host bind
+#     mount. This lets Docker/Wazuh manage ownership and permissions internally
+#     and avoids Synology ACL interference with the Wazuh container UID.
 # CREDENTIALS: read from .env (gitignored) via ${VAR} substitution below.
 # See .env.example for the three variables required, and README.md's
 # "Credential rotation" section for how each was actually rotated —
@@ -50,7 +46,9 @@ services:
     ports:
       - "1514:1514"
       - "1515:1515"
-      - "55000:55000"
+#     55000 is intentionally not published to the host.
+#     Wazuh accesses port 55000 over wazuh-net via Docker DNS.
+#     - "55000:55000"
     # 514:514/udp intentionally omitted — the telemetry stack's Alloy container
     # already owns host port 514 for OPNsense syslog. OPNsense integration here
     # goes through the os-wazuh-agent plugin (1514/1515 above), not raw syslog,
@@ -68,7 +66,7 @@ services:
     volumes:
       - wazuh_api_configuration:/var/ossec/api/configuration
       - wazuh_etc:/var/ossec/etc
-      - ./wazuh-manager/logs:/var/ossec/logs
+      - wazuh_logs:/var/ossec/logs
       - wazuh_queue:/var/ossec/queue
       - wazuh_var_multigroups:/var/ossec/var/multigroups
       - wazuh_integrations:/var/ossec/integrations
@@ -81,6 +79,8 @@ services:
       - ./config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
       - ./config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
       - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+    networks:
+      - wazuh-net
 
   wazuh.indexer:
     image: wazuh/wazuh-indexer:4.14.7
@@ -89,8 +89,10 @@ services:
     container_name: wazuh.indexer
     restart: always
     mem_limit: 2g
-    ports:
-      - "9200:9200"
+#   9200 is intentionally not published to the host.
+#   Wazuh accesses port 9200 over wazuh-net via Docker DNS.
+#   ports:
+#     - "9200:9200"
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
     ulimits:
@@ -109,6 +111,8 @@ services:
       - ./config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem
       - ./config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml
       - ./config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml
+    networks:
+      - wazuh-net
 
   wazuh.dashboard:
     image: wazuh/wazuh-dashboard:4.14.7
@@ -144,10 +148,13 @@ services:
     links:
       - wazuh.indexer:wazuh.indexer
       - wazuh.manager:wazuh.manager
+    networks:
+      - wazuh-net
 
 volumes:
   wazuh_api_configuration:
   wazuh_etc:
+  wazuh_logs:
   wazuh_queue:
   wazuh_var_multigroups:
   wazuh_integrations:
@@ -159,3 +166,10 @@ volumes:
   wazuh-indexer-data:
   wazuh-dashboard-config:
   wazuh-dashboard-custom:
+
+networks:
+  wazuh-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16
