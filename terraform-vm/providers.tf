@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 1.12.2"
   required_providers {
     libvirt = {
-      source  = "dmacvicar/libvirt"
+      source = "dmacvicar/libvirt"
       # Deliberately pinned to the 0.8.x line, NOT floated to latest.
       # v0.9.0 was a ground-up rewrite (different schema entirely: blocks
       # became nested object/list arguments, IP lookup moved to a separate

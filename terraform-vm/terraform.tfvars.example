@@ -3,8 +3,11 @@
 
 ssh_public_key = "ssh-ed25519 AAAA... your-key-here"
 
+# Generate with: openssl passwd -6
+admin_password_hash = "$6$REPLACE_WITH_SHA512_PASSWORD_HASH"
+
 # Optional overrides (defaults shown in variables.tf):
-# vm_name           = "wazuh-manager"
+# vm_name           = "wazuh"
 # vcpu              = 4
 # memory_mb         = 8192
 # network_interface = "enp4s0"

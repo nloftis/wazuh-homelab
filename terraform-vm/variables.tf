@@ -1,13 +1,13 @@
 variable "vm_name" {
   description = "libvirt domain name for the Wazuh VM"
   type        = string
-  default     = "wazuh-manager"
+  default     = "wazuh"
 }
 
 variable "vm_hostname" {
   description = "Hostname set inside the guest via cloud-init"
   type        = string
-  default     = "wazuh-manager"
+  default     = "wazuh"
 }
 
 variable "vcpu" {
@@ -56,6 +56,12 @@ variable "admin_username" {
   description = "Username created inside the guest via cloud-init"
   type        = string
   default     = "wazuhadmin"
+}
+
+variable "admin_password_hash" {
+  description = "SHA-512 password hash for the VM admin user"
+  type        = string
+  sensitive   = true
 }
 
 variable "timezone" {

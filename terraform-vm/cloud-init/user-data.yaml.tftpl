@@ -5,10 +5,11 @@ fqdn: ${hostname}.home.arpa
 
 users:
   - name: ${admin_username}
-    groups: [sudo]
+    groups: [adm, sudo]
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
-    lock_passwd: true
+    lock_passwd: false
+    passwd: ${admin_password_hash}
     ssh_authorized_keys:
       - ${ssh_public_key}
 
@@ -25,5 +26,28 @@ packages:
   - gnupg
   - apt-transport-https
 
+write_files:
+  - path: /usr/local/sbin/install-wazuh.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      echo "=== Wazuh installation started: $(date -Is) ==="
+
+      cd /root
+      curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
+      bash wazuh-install.sh -a
+
+      echo "=== Verifying Wazuh services ==="
+
+      systemctl is-active --quiet wazuh-indexer
+      systemctl is-active --quiet wazuh-manager
+      systemctl is-active --quiet wazuh-dashboard
+
+      echo "=== Wazuh installation completed successfully: $(date -Is) ==="
+
 runcmd:
   - systemctl enable --now qemu-guest-agent
+  - /usr/local/sbin/install-wazuh.sh

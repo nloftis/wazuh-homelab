@@ -28,23 +28,24 @@ resource "libvirt_volume" "ubuntu_base" {
 
 # VM's actual root disk, backed by the base image above.
 resource "libvirt_volume" "wazuh_disk" {
-  name             = "${var.vm_name}.qcow2"
-  pool             = var.libvirt_pool_name
-  base_volume_id   = libvirt_volume.ubuntu_base.id
-  size             = var.disk_size_bytes
-  format           = "qcow2"
+  name           = "${var.vm_name}.qcow2"
+  pool           = var.libvirt_pool_name
+  base_volume_id = libvirt_volume.ubuntu_base.id
+  size           = var.disk_size_bytes
+  format         = "qcow2"
 }
 
 # cloud-init seed disk: injects hostname, SSH key, and DHCP network config
 # on first boot. No manual console setup required.
 resource "libvirt_cloudinit_disk" "commoninit" {
-  name      = "${var.vm_name}-cloudinit.iso"
-  pool             = var.libvirt_pool_name
+  name = "${var.vm_name}-cloudinit.iso"
+  pool = var.libvirt_pool_name
   user_data = templatefile("${path.module}/cloud-init/user-data.yaml.tftpl", {
-    hostname       = var.vm_hostname
-    timezone       = var.timezone
-    admin_username = var.admin_username
-    ssh_public_key = var.ssh_public_key
+    hostname            = var.vm_hostname
+    timezone            = var.timezone
+    admin_username      = var.admin_username
+    admin_password_hash = var.admin_password_hash
+    ssh_public_key      = var.ssh_public_key
   })
   meta_data = templatefile("${path.module}/cloud-init/meta-data.yaml.tftpl", {
     hostname = var.vm_hostname
