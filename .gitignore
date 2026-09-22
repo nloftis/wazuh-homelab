@@ -3,3 +3,9 @@
 *~
 *.swp
 *.swo
+
+# Synology metadata
+@eaDir/
+@SynoResource
+@SynoEAStream
+.SynoResource
