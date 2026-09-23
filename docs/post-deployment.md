@@ -7,7 +7,7 @@ two paths; everything below is the same either way.
 
 ## 1. Deploy Wazuh agents to monitored hosts
 
-**Status: three agents active**, all reporting to `docker-compose/`'s
+**Status: four agents active**, all reporting to `docker-compose/`'s
 manager (`192.168.20.10`) — currently the only live manager, since
 `terraform-vm/` is torn down. From the dashboard: **Agents summary →
 Deploy new agent**. This generates an install command specific to the
@@ -19,18 +19,51 @@ on each host you want monitored.
 | `win11-vm` | `192.168.10.11` | Windows 11 Enterprise | PC | KVM VM on the Pop!_OS host |
 | `popos-hypervisor` | `192.168.10.10` | Pop!_OS 22.04 LTS | PC | The actual daily-driver/hypervisor host — heavier initial FIM baseline scan (~700MB RAM during first `syscheckd` run), settles after |
 | `OPNsense.home.arpa` | `192.168.20.1` | BSD 15.1 | NAS-reachable | Installed via the `os-wazuh-agent` community plugin, not a generic agent — see section 2 |
+| `cosmic-vm` | `192.168.10.16` | Pop!_OS 24.04 LTS | PC | KVM VM; additional Pop!_OS Linux monitoring endpoint |
 
 Each agent needs outbound reachability to the manager on:
 - **TCP/UDP 1514** — event/log data
 - **TCP 1515** — agent registration/enrollment
 - **TCP 55000** — Wazuh API
 
-All three targets above turned out to already be reachable without any
+All four targets above turned out to already be reachable without any
 new OPNsense firewall rule — confirmed via `Test-NetConnection` (Windows)
-and `nc -zv` (Pop!_OS) before installing, rather than assumed. PC segment
-rules were already permissive enough. If a future target needs a rule
-added, the `terraform-vm/README.md` Troubleshooting section has real
-examples of what that looked like for that deployment.
+and `nc -zv` (Pop!_OS) before installing, rather than assumed. For
+`cosmic-vm`, TCP connectivity from `192.168.10.16` to the manager at
+`192.168.20.10` was explicitly verified on both port `1514` (agent data)
+and port `1515` (enrollment). The Synology also successfully pinged
+`192.168.10.16`, confirming return-path visibility. ICMP from Cosmic to
+the Synology did not receive replies, but this did not affect the required
+Wazuh TCP paths. PC segment rules were already permissive enough. If a future
+target needs a rule added, the `terraform-vm/README.md` Troubleshooting section
+has real examples of what that looked like for that deployment.
+
+### Cosmic VM
+
+A Pop!_OS 24.04 KVM VM was added as an additional Linux endpoint. Unlike
+`popos-hypervisor`, which is the physical Pop!_OS 22.04 host, this provides
+a separate VM-based Linux endpoint for monitoring and testing.
+
+The dashboard's **Deploy new agent** workflow was used with:
+
+- **Package:** DEB amd64
+- **Wazuh agent:** `4.14.7-1`
+- **Manager:** `192.168.20.10`
+- **Agent name:** `cosmic-vm`
+- **Group:** `default`
+
+The generated install command set `WAZUH_MANAGER='192.168.20.10'` and
+`WAZUH_AGENT_NAME='cosmic-vm'`. After installation, the service was enabled
+and started with systemd. Local validation showed `wazuh-agent.service` as
+`active (running)` and enabled at boot.
+
+The Wazuh dashboard then confirmed agent `004` as **active**, reporting
+`192.168.10.16`, Pop!_OS 24.04 LTS, and Wazuh version `v4.14.7`.
+
+A recurring `sudo: unable to resolve host pop-os` warning was observed on
+Cosmic during installation and service checks. This is a separate local
+hostname-resolution issue and did not prevent installation, enrollment, or
+agent operation.
 
 **Deliberately deferred, not forgotten:** Synology NAS and the ParrotOS
 pentesting VM. NAS was investigated and set aside — Wazuh's official
@@ -242,8 +275,8 @@ automated correlation.
 ## 6. First-week checklist
 
 - [x] All target hosts show as "Active" agents, not just "Registered" —
-      `win11-vm`, `popos-hypervisor`, `OPNsense.home.arpa` all confirmed
-      active.
+      `win11-vm`, `popos-hypervisor`, `OPNsense.home.arpa`, and `cosmic-vm`
+      all confirmed active.
 - [x] At least one FIM alert confirmed — validated Aug 12, 2026 on
       `popos-hypervisor` via `/etc/fim-test.txt`.
 
